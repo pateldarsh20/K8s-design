@@ -127,7 +127,18 @@ function CanvasNodeComponent({
 
   const handleMouseDown = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    if (target.classList.contains('connection-point') || target.classList.contains('resizer')) return;
+    if (target.closest('.connection-point') || target.closest('.resizer')) return;
+
+    if (isContainer) {
+      if (target.closest('.shape-border') || target.closest('.text-box')) {
+        e.stopPropagation();
+        e.preventDefault();
+        onSelect(node.id);
+        setDragInfo({ startX: e.clientX, startY: e.clientY, initialNodeX: node.position.x, initialNodeY: node.position.y });
+      }
+      return;
+    }
+
     e.stopPropagation();
     e.preventDefault();
     onSelect(node.id);
@@ -242,6 +253,7 @@ function CanvasNodeComponent({
         borderRight: !isContainer && !isText ? '1px solid rgba(255, 255, 255, 0.05)' : undefined,
         borderBottom: !isContainer && !isText ? '1px solid rgba(255, 255, 255, 0.05)' : undefined,
         borderRadius: isCircle ? '50%' : '8px',
+        pointerEvents: isContainer ? 'none' : 'auto',
         boxShadow: isSelected && !isContainer
           ? `0 0 24px ${color}80, 0 0 48px ${color}40`
           : isContainer ? 'none' : isTransparent ? `0 0 15px ${color}4d` : `0 10px 25px rgba(0, 0, 0, 0.5)`,
@@ -272,28 +284,50 @@ function CanvasNodeComponent({
         >
           {isCircle ? (
             <>
+              {/* Interior */}
               <circle
                 cx="50%"
                 cy="50%"
                 r="50%"
                 fill={shapeFill}
+                stroke="none"
+                style={{ pointerEvents: 'fill' }}
+                className="shape-interior"
+              />
+              {/* Border */}
+              <circle
+                cx="50%"
+                cy="50%"
+                r="50%"
+                fill="transparent"
                 stroke={isSelected ? '#ffaa00' : color}
                 strokeWidth={isSelected ? 4 : 3}
                 className={`shape-border ${isSelected ? 'selected' : ''}`}
-                style={{ pointerEvents: 'stroke' }}
+                style={{ pointerEvents: 'stroke', cursor: 'move' }}
               />
             </>
           ) : (
             <>
+              {/* Interior */}
               <rect
                 width="100%"
                 height="100%"
                 rx="8"
                 fill={shapeFill}
+                stroke="none"
+                style={{ pointerEvents: 'fill' }}
+                className="shape-interior"
+              />
+              {/* Border */}
+              <rect
+                width="100%"
+                height="100%"
+                rx="8"
+                fill="transparent"
                 stroke={isSelected ? '#ffaa00' : color}
                 strokeWidth={isSelected ? 4 : 3}
                 className={`shape-border ${isSelected ? 'selected' : ''}`}
-                style={{ pointerEvents: 'stroke' }}
+                style={{ pointerEvents: 'stroke', cursor: 'move' }}
               />
             </>
           )}
@@ -335,7 +369,7 @@ function CanvasNodeComponent({
           />
         ) : (
           <div
-            className={`font-semibold text-sm truncate flex items-center justify-${isContainer ? 'start' : isText ? 'center' : 'start'} gap-2 ${isContainer ? 'opacity-70' : ''}`}
+            className={`text-box font-semibold text-sm truncate flex items-center justify-${isContainer ? 'start' : isText ? 'center' : 'start'} gap-2 ${isContainer ? 'opacity-70' : ''}`}
             style={{
               color,
               textShadow: `0 0 8px ${color}50`,
@@ -565,15 +599,20 @@ export default function Canvas({ onContextMenu }: CanvasProps) {
   const handleMouseDown = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     
-    if (target === containerRef.current || target.classList.contains('canvas-background') || target.classList.contains('canvas-content')) {
-      selectNode(null);
-      setConnectingFrom(null);
-      
-      if (e.button === 1 || e.button === 2 || e.button === 0) {
-        e.preventDefault();
-        setIsPanning(true);
-        setPanStart({ x: e.clientX, y: e.clientY });
-      }
+    // Prevent panning if clicking the connection delete button
+    if (target.closest('.connection-line-group text') || target.closest('.connection-line-group circle')) {
+      return;
+    }
+
+    // Since we rely on e.stopPropagation() in child interactive elements (nodes, connection handles),
+    // any mousedown that bubbles up to here should trigger canvas panning and deselect nodes.
+    selectNode(null);
+    setConnectingFrom(null);
+    
+    if (e.button === 1 || e.button === 2 || e.button === 0) {
+      e.preventDefault();
+      setIsPanning(true);
+      setPanStart({ x: e.clientX, y: e.clientY });
     }
   };
 
