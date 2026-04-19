@@ -55,30 +55,30 @@ export default function Toolbar({ onExportPng }: ToolbarProps) {
   const handleZoomIn = () => {
     const { viewport } = useCanvasStore.getState();
     const newZoom = Math.min(3, zoom * 1.1);
-    
+
     // Zoom around center of screen
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
     const newViewportX = centerX - (centerX - viewport.x) * (newZoom / zoom);
     const newViewportY = centerY - (centerY - viewport.y) * (newZoom / zoom);
-    
+
     setZoom(newZoom);
     setViewport({ x: newViewportX, y: newViewportY });
   };
-  
+
   const handleZoomOut = () => {
     const { viewport } = useCanvasStore.getState();
     const newZoom = Math.max(0.3, zoom * 0.9);
-    
+
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
     const newViewportX = centerX - (centerX - viewport.x) * (newZoom / zoom);
     const newViewportY = centerY - (centerY - viewport.y) * (newZoom / zoom);
-    
+
     setZoom(newZoom);
     setViewport({ x: newViewportX, y: newViewportY });
   };
-  
+
   const handleResetView = () => {
     setZoom(1);
     setViewport({ x: 0, y: 0 });

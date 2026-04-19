@@ -10,6 +10,19 @@
   box-sizing: border-box;
 }
 
+/* Smooth transition for sidebar */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ensure canvas resizes properly */
+.flex-1 {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+
 :root {
   --neon-cyan: #00ffff;
   --neon-blue: #0066ff;
@@ -91,6 +104,7 @@ body {
   0% {
     stroke-dashoffset: 24;
   }
+
   100% {
     stroke-dashoffset: 0;
   }
@@ -148,9 +162,12 @@ body {
 
 /* Selection highlight animation */
 @keyframes pulse-gold {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
   }
+
   50% {
     box-shadow: 0 0 24px rgba(255, 215, 0, 1);
   }
@@ -251,7 +268,7 @@ body {
 
 /* Grid snap indicator */
 .grid-snap-active {
-  background-image: 
+  background-image:
     linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
   background-size: 20px 20px;
@@ -346,9 +363,12 @@ body {
 }
 
 @keyframes scanline {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.3;
   }
+
   50% {
     opacity: 1;
   }
@@ -438,7 +458,8 @@ body {
 
 /* Solid border for shapes */
 .shape-border {
-  stroke-dasharray: none !important; /* Force solid line */
+  stroke-dasharray: none !important;
+  /* Force solid line */
   transition: stroke-width 0.2s, filter 0.2s;
 }
 

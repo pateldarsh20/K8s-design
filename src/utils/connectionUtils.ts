@@ -41,7 +41,7 @@ export const getBezierPath = (
     const distanceX = Math.abs(targetPos.x - sourcePos.x);
     const distanceY = Math.abs(targetPos.y - sourcePos.y);
     const c = Math.max(Math.max(distanceX, distanceY) / 2, 50);
-    
+
     switch (handle) {
       case 'right': dx = c; break;
       case 'left': dx = -c; break;
@@ -62,7 +62,7 @@ export const getLineLength = (
   targetPos: Position
 ): number => {
   return Math.sqrt(
-    Math.pow(targetPos.x - sourcePos.x, 2) + 
+    Math.pow(targetPos.x - sourcePos.x, 2) +
     Math.pow(targetPos.y - sourcePos.y, 2)
   );
 };

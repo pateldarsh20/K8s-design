@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, Copy } from 'lucide-react';
+import { Trash2, Copy, EyeOff } from 'lucide-react';
 import { useCanvasStore } from '../store/canvasStore';
 
 interface ContextMenuProps {
@@ -10,7 +10,7 @@ interface ContextMenuProps {
 }
 
 export default function ContextMenu({ x, y, nodeId, onClose }: ContextMenuProps) {
-  const { deleteNode, nodes, addNode, updateNode } = useCanvasStore();
+  const { deleteNode, nodes, addNode, updateNode, hideNode } = useCanvasStore();
 
   const node = nodes.find((n) => n.id === nodeId);
 
@@ -112,7 +112,7 @@ export default function ContextMenu({ x, y, nodeId, onClose }: ContextMenuProps)
             />
           ))}
         </div>
-        
+
         {isContainer && (
           <>
             <div className="text-xs text-gray-400 mb-2 mt-4 font-semibold uppercase tracking-wider">🖌️ Fill Color</div>
@@ -128,20 +128,20 @@ export default function ContextMenu({ x, y, nodeId, onClose }: ContextMenuProps)
             </div>
           </>
         )}
-        
+
         <label className="flex items-center gap-2 text-sm cursor-pointer mb-3 hover:text-white text-gray-300">
-          <input 
-            type="checkbox" 
+          <input
+            type="checkbox"
             checked={isTransparent}
             onChange={handleTransparentToggle}
             className="rounded bg-gray-900 border-gray-600 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-gray-900"
           />
           Glass / Transparent
         </label>
-        
+
         <div className="flex items-center gap-2 text-sm text-gray-300">
-          <input 
-            type="color" 
+          <input
+            type="color"
             value={currentColor}
             onChange={handleCustomColorChange}
             className="w-6 h-6 rounded cursor-pointer bg-transparent border-0 p-0"
@@ -153,6 +153,10 @@ export default function ContextMenu({ x, y, nodeId, onClose }: ContextMenuProps)
       <div className="context-menu-item" onClick={handleDuplicate}>
         <Copy size={14} />
         <span>Duplicate</span>
+      </div>
+      <div className="context-menu-item" onClick={() => { hideNode(nodeId); onClose(); }}>
+        <EyeOff size={14} />
+        <span>Hide</span>
       </div>
       <div className="context-menu-item danger" onClick={handleDelete}>
         <Trash2 size={14} />

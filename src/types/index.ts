@@ -20,6 +20,7 @@ export interface CanvasNode {
     fillColor?: string;
     isTransparent?: boolean;
     iconUrl?: string;
+    isHidden?: boolean;
   };
 }
 

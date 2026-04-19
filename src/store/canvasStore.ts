@@ -34,6 +34,10 @@ interface CanvasStore {
 
   clearCanvas: () => void;
   loadFromLocalStorage: () => void;
+
+  hideNode: (id: string) => void;
+  unhideNode: (id: string) => void;
+  unhideAll: () => void;
 }
 
 const generateId = () => `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -70,6 +74,7 @@ export const useCanvasStore = create<CanvasStore>()(
             color: initialData?.color || undefined,
             iconUrl: initialData?.iconUrl || undefined,
             isTransparent: true,
+            isHidden: false,
           },
         };
         set({ nodes: [...get().nodes, newNode] });
@@ -185,6 +190,32 @@ export const useCanvasStore = create<CanvasStore>()(
 
       loadFromLocalStorage: () => {
         // Handled by persist middleware
+      },
+
+      hideNode: (id) => {
+        set({
+          nodes: get().nodes.map((node) =>
+            node.id === id ? { ...node, data: { ...node.data, isHidden: true } } : node
+          ),
+          selectedNodeId: get().selectedNodeId === id ? null : get().selectedNodeId,
+        });
+      },
+
+      unhideNode: (id) => {
+        set({
+          nodes: get().nodes.map((node) =>
+            node.id === id ? { ...node, data: { ...node.data, isHidden: false } } : node
+          ),
+        });
+      },
+
+      unhideAll: () => {
+        set({
+          nodes: get().nodes.map((node) => ({
+            ...node,
+            data: { ...node.data, isHidden: false },
+          })),
+        });
       },
     }),
     {

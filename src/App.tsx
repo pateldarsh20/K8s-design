@@ -14,6 +14,7 @@ import Sidebar from './components/Sidebar';
 import Canvas from './components/Canvas';
 import Toolbar from './components/Toolbar';
 import ContextMenu from './components/ContextMenu';
+import { HiddenPanel } from './components/HiddenPanel';
 import { useCanvasStore } from './store/canvasStore';
 import { COMPONENT_COLORS, ComponentType, NODE_SIZES } from './types';
 import {
@@ -27,6 +28,8 @@ import {
   Type,
   LucideIcon,
   Layout,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 const iconMap: Record<string, LucideIcon> = {
@@ -92,6 +95,17 @@ export default function App() {
     nodeId: string;
   } | null>(null);
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem('sidebarOpen');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const toggleSidebar = () => {
+    const newState = !isSidebarOpen;
+    setIsSidebarOpen(newState);
+    localStorage.setItem('sidebarOpen', String(newState));
+  };
+
   const { addNode } = useCanvasStore();
 
   useEffect(() => {
@@ -126,7 +140,7 @@ export default function App() {
     }
   };
 
-const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     setActiveDrag(null);
     const { active, over } = event;
 
@@ -137,7 +151,7 @@ const handleDragEnd = (event: DragEndEvent) => {
         if (canvasEl) {
           const rect = canvasEl.getBoundingClientRect();
           const translatedRect = event.active.rect.current.translated;
-          
+
           if (translatedRect) {
             const state = useCanvasStore.getState();
             const x = (translatedRect.left - rect.left - state.viewport.x) / state.zoom;
@@ -198,23 +212,52 @@ const handleDragEnd = (event: DragEndEvent) => {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="relative w-full h-full overflow-hidden">
-        <Sidebar />
-
-        <div className="absolute inset-0 ml-[280px] overflow-hidden">
-          <Canvas onContextMenu={handleContextMenu} />
+      <div className="flex w-full h-full overflow-hidden bg-[#0a0a0a]">
+        {/* Collapsible Sidebar */}
+        <div 
+          className={`relative h-full transition-all duration-300 ease-in-out flex-shrink-0 ${
+            isSidebarOpen ? 'w-[280px]' : 'w-0'
+          }`}
+        >
+          <div className={`w-[280px] h-full ${!isSidebarOpen ? 'pointer-events-none opacity-0' : 'opacity-100'} transition-opacity duration-200`}>
+            <Sidebar />
+          </div>
         </div>
+        
+        {/* Toggle Button */}
+        <button
+          onClick={toggleSidebar}
+          className="fixed left-0 top-1/2 -translate-y-1/2 z-[60] bg-gray-900/90 backdrop-blur-md p-2 rounded-r-xl border border-cyan-500/30 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(0,255,255,0.3)] transition-all flex items-center justify-center group"
+          style={{ 
+            left: isSidebarOpen ? '280px' : '0',
+            transition: 'left 0.3s ease-in-out, all 0.2s ease'
+          }}
+          title={isSidebarOpen ? 'Collapse Sidebar' : 'Expand Sidebar'}
+        >
+          {isSidebarOpen ? (
+            <ChevronLeft size={20} className="text-cyan-400 group-hover:scale-110 transition-transform" />
+          ) : (
+            <ChevronRight size={20} className="text-cyan-400 group-hover:scale-110 transition-transform" />
+          )}
+        </button>
 
-        <Toolbar onExportPng={handleExportPng} ref={canvasRef} />
+        {/* Canvas Area */}
+        <div className="flex-1 relative overflow-hidden">
+          <Canvas onContextMenu={handleContextMenu} />
+          
+          <Toolbar onExportPng={handleExportPng} ref={canvasRef} />
 
-        {contextMenu && (
-          <ContextMenu
-            x={contextMenu.x}
-            y={contextMenu.y}
-            nodeId={contextMenu.nodeId}
-            onClose={() => setContextMenu(null)}
-          />
-        )}
+          {contextMenu && (
+            <ContextMenu
+              x={contextMenu.x}
+              y={contextMenu.y}
+              nodeId={contextMenu.nodeId}
+              onClose={() => setContextMenu(null)}
+            />
+          )}
+
+          <HiddenPanel />
+        </div>
 
         <DragOverlay>
           {activeDrag && (

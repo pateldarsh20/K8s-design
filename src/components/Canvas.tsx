@@ -39,11 +39,11 @@ function ConnectionHandle({ position, node, onConnectionStart }: HandleProps) {
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    
+
     const size = NODE_SIZES[node.type];
     const width = node.width || size.width;
     const height = node.height || size.height;
-    
+
     let pos: Position;
     switch (position) {
       case 'top': pos = { x: node.position.x + width / 2, y: node.position.y }; break;
@@ -52,7 +52,7 @@ function ConnectionHandle({ position, node, onConnectionStart }: HandleProps) {
       case 'right': pos = { x: node.position.x + width, y: node.position.y + height / 2 }; break;
       default: pos = { x: node.position.x + width / 2, y: node.position.y + height / 2 };
     }
-    
+
     onConnectionStart(node.id, position, pos);
   };
 
@@ -222,7 +222,7 @@ function CanvasNodeComponent({
 
   let backgroundColor = 'rgba(20, 20, 20, 0.95)';
   let backdropFilter = 'none';
-  
+
   if (isContainer) {
     backgroundColor = 'transparent';
     backdropFilter = isTransparent ? 'blur(8px)' : 'none';
@@ -346,8 +346,8 @@ function CanvasNodeComponent({
           )}
         </div>
       )}
-      
-    <div 
+
+      <div
         className={`flex-1 min-w-0 ${isContainer ? 'w-full' : ''}`}
         style={{ pointerEvents: isContainer ? 'none' : 'inherit', zIndex: 10, position: 'relative' }}
       >
@@ -360,7 +360,7 @@ function CanvasNodeComponent({
             onKeyDown={handleKeyDown}
             className="editable-text-input w-full bg-transparent outline-none"
             autoFocus
-            style={{ 
+            style={{
               color,
               textAlign: isContainer ? 'left' : 'center',
               fontSize: isText ? '14px' : '13px',
@@ -381,9 +381,9 @@ function CanvasNodeComponent({
           >
             <span>{node.data.customName || node.data.label}</span>
             {isHovered && !isContainer && (
-              <Edit2 
-                size={12} 
-                className="opacity-50 hover:opacity-100 cursor-pointer transition-opacity shrink-0" 
+              <Edit2
+                size={12}
+                className="opacity-50 hover:opacity-100 cursor-pointer transition-opacity shrink-0"
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsEditing(true);
@@ -476,7 +476,7 @@ function ConnectionLineComponent({
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <g 
+    <g
       className="connection-line-group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -490,7 +490,7 @@ function ConnectionLineComponent({
           </feMerge>
         </filter>
       </defs>
-      
+
       <path
         d={calculateConnectionPath(sourcePos, targetPos, sourceHandle, targetHandle)}
         stroke="transparent"
@@ -498,7 +498,7 @@ function ConnectionLineComponent({
         fill="none"
         style={{ pointerEvents: 'stroke', cursor: 'pointer' }}
       />
-      
+
       <path
         d={calculateConnectionPath(sourcePos, targetPos, sourceHandle, targetHandle)}
         stroke="#00ffff"
@@ -512,7 +512,7 @@ function ConnectionLineComponent({
           pointerEvents: 'none'
         }}
       />
-      
+
       {isHovered && (
         <g
           style={{ cursor: 'pointer', pointerEvents: 'all' }}
@@ -598,7 +598,7 @@ export default function Canvas({ onContextMenu }: CanvasProps) {
 
   const handleMouseDown = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    
+
     // Prevent panning if clicking the connection delete button
     if (target.closest('.connection-line-group text') || target.closest('.connection-line-group circle')) {
       return;
@@ -608,7 +608,7 @@ export default function Canvas({ onContextMenu }: CanvasProps) {
     // any mousedown that bubbles up to here should trigger canvas panning and deselect nodes.
     selectNode(null);
     setConnectingFrom(null);
-    
+
     if (e.button === 1 || e.button === 2 || e.button === 0) {
       e.preventDefault();
       setIsPanning(true);
@@ -629,9 +629,9 @@ export default function Canvas({ onContextMenu }: CanvasProps) {
       } else if (connectingFrom) {
         const rect = containerRef.current?.getBoundingClientRect();
         if (rect) {
-          setMousePos({ 
-            x: (e.clientX - rect.left - viewport.x) / zoom, 
-            y: (e.clientY - rect.top - viewport.y) / zoom 
+          setMousePos({
+            x: (e.clientX - rect.left - viewport.x) / zoom,
+            y: (e.clientY - rect.top - viewport.y) / zoom
           });
         }
       }
@@ -646,19 +646,19 @@ export default function Canvas({ onContextMenu }: CanvasProps) {
 
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
-    
+
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
-    
+
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-    
+
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
     const newZoom = Math.min(3, Math.max(0.3, zoom * delta));
-    
+
     const newViewportX = mouseX - (mouseX - viewport.x) * (newZoom / zoom);
     const newViewportY = mouseY - (mouseY - viewport.y) * (newZoom / zoom);
-    
+
     setZoom(newZoom);
     setViewport({ x: newViewportX, y: newViewportY });
   };
@@ -677,7 +677,7 @@ export default function Canvas({ onContextMenu }: CanvasProps) {
   const connectionLines = connections.map((conn) => {
     const sourceNode = nodes.find((n) => n.id === conn.sourceId);
     const targetNode = nodes.find((n) => n.id === conn.targetId);
-    if (!sourceNode || !targetNode) return null;
+    if (!sourceNode || !targetNode || sourceNode.data.isHidden || targetNode.data.isHidden) return null;
 
     return (
       <ConnectionLineComponent
@@ -729,7 +729,7 @@ export default function Canvas({ onContextMenu }: CanvasProps) {
           }
         }
       `}</style>
-      
+
       <div
         className="canvas-content"
         style={containerStyle}
@@ -765,7 +765,7 @@ export default function Canvas({ onContextMenu }: CanvasProps) {
             )}
           </svg>
 
-          {nodes.map((node) => (
+          {nodes.filter(n => !n.data.isHidden).map((node) => (
             <CanvasNodeComponent
               key={node.id}
               node={node}
@@ -780,14 +780,14 @@ export default function Canvas({ onContextMenu }: CanvasProps) {
           ))}
 
           {connectingFrom &&
-            nodes.map((node) => {
+            nodes.filter(n => !n.data.isHidden).map((node) => {
               if (node.id === connectingFrom.nodeId) return null;
               if (node.type === 'circle' || node.type === 'rectangle') return null;
-              
+
               const nodeSize = NODE_SIZES[node.type];
               const width = node.width || nodeSize.width;
               const height = node.height || nodeSize.height;
-              
+
               return (
                 <div
                   key={node.id}
@@ -804,28 +804,28 @@ export default function Canvas({ onContextMenu }: CanvasProps) {
                   }}
                   onMouseUp={(e) => {
                     e.stopPropagation();
-                    
+
                     const rect = e.currentTarget.getBoundingClientRect();
                     const container = containerRef.current?.getBoundingClientRect();
                     if (!container) return;
-                    
+
                     const state = useCanvasStore.getState();
                     const mouseX = (e.clientX - container.left - state.viewport.x) / state.zoom;
                     const mouseY = (e.clientY - container.top - state.viewport.y) / state.zoom;
-                    
+
                     const relX = mouseX - node.position.x;
                     const relY = mouseY - node.position.y;
-                    
+
                     let closestHandle: string = 'top';
                     let minDist = Infinity;
-                    
+
                     const handles = [
                       { name: 'top', x: width / 2, y: 0 },
                       { name: 'bottom', x: width / 2, y: height },
                       { name: 'left', x: 0, y: height / 2 },
                       { name: 'right', x: width, y: height / 2 },
                     ];
-                    
+
                     handles.forEach(h => {
                       const dist = Math.sqrt(Math.pow(relX - h.x, 2) + Math.pow(relY - h.y, 2));
                       if (dist < minDist) {
@@ -833,7 +833,7 @@ export default function Canvas({ onContextMenu }: CanvasProps) {
                         closestHandle = h.name;
                       }
                     });
-                    
+
                     addConnection(connectingFrom.nodeId, node.id, connectingFrom.handle, closestHandle);
                     setConnectingFrom(null);
                   }}
