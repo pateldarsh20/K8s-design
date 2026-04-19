@@ -14,8 +14,11 @@ export interface CanvasNode {
   data: {
     label: string;
     description?: string;
-    customText?: string;
+    originalName?: string;
+    customName?: string;
     color?: string;
+    fillColor?: string;
+    isTransparent?: boolean;
     iconUrl?: string;
   };
 }

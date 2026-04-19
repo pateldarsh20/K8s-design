@@ -26,6 +26,7 @@ import {
   Circle,
   Type,
   LucideIcon,
+  Layout,
 } from 'lucide-react';
 
 const iconMap: Record<string, LucideIcon> = {
@@ -39,15 +40,14 @@ const iconMap: Record<string, LucideIcon> = {
   text: Type,
 };
 
-function GhostComponent({ type, label }: { type: ComponentType; label: string }) {
-  const color = COMPONENT_COLORS[type];
-  const Icon = iconMap[type] || Square;
+function GhostComponent({ type, label, iconUrl, color }: { type: ComponentType; label: string; iconUrl?: string; color?: string }) {
+  const displayColor = color || COMPONENT_COLORS[type] || '#6b7280';
 
   return (
     <div
       className="sidebar-item flex items-center gap-3 p-3 rounded-lg"
       style={{
-        borderLeft: `3px solid ${color}`,
+        borderLeft: `3px solid ${displayColor}`,
         borderTop: '1px solid rgba(255, 255, 255, 0.05)',
         borderRight: '1px solid rgba(255, 255, 255, 0.05)',
         borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
@@ -58,15 +58,18 @@ function GhostComponent({ type, label }: { type: ComponentType; label: string })
       }}
     >
       <div
-        className="w-10 h-10 rounded-lg flex items-center justify-center"
-        style={{ backgroundColor: `${color}20`, color }}
+        className="w-10 h-10 rounded-lg flex items-center justify-center p-1 bg-white/5"
       >
-        <Icon size={20} />
+        {iconUrl ? (
+          <img src={iconUrl} alt={label} className="w-full h-full object-contain" />
+        ) : (
+          <Layout size={20} color={displayColor} />
+        )}
       </div>
       <div className="flex-1 min-w-0">
         <div
           className="font-semibold text-sm truncate"
-          style={{ color, textShadow: `0 0 8px ${color}50` }}
+          style={{ color: displayColor, textShadow: `0 0 8px ${displayColor}50` }}
         >
           {label}
         </div>
@@ -80,6 +83,8 @@ export default function App() {
   const [activeDrag, setActiveDrag] = useState<{
     type: ComponentType;
     label: string;
+    iconUrl?: string;
+    color?: string;
   } | null>(null);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -114,10 +119,10 @@ export default function App() {
     })
   );
 
-const handleDragStart = (event: DragStartEvent) => {
-    const { type, label } = event.active.data.current || {};
-    if (type) {
-      setActiveDrag({ type, label });
+  const handleDragStart = (event: DragStartEvent) => {
+    const { type, label, color, iconUrl, isFromSidebar } = event.active.data.current || {};
+    if (isFromSidebar && type && label) {
+      setActiveDrag({ type, label, color, iconUrl });
     }
   };
 
@@ -126,7 +131,7 @@ const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over?.id === 'canvas') {
-      const { type } = active.data.current || {};
+      const { type, label, color, iconUrl } = active.data.current || {};
       if (type) {
         const canvasEl = document.querySelector('.canvas-background');
         if (canvasEl) {
@@ -138,7 +143,7 @@ const handleDragEnd = (event: DragEndEvent) => {
             const x = (translatedRect.left - rect.left - state.viewport.x) / state.zoom;
             const y = (translatedRect.top - rect.top - state.viewport.y) / state.zoom;
 
-            addNode(type as ComponentType, { x, y });
+            addNode(type as ComponentType, { x, y }, { label, color, iconUrl });
           }
         }
       }

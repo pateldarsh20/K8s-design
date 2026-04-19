@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { SidebarItem } from '../types';
 
 export function formatDisplayName(baseName: string): string {
@@ -81,5 +82,5 @@ export function loadAllIcons(): SidebarItem[] {
     });
   }
   
-  return components.sort((a,b) => a.name.localeCompare(b.name));
+  return components.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 }

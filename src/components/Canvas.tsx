@@ -13,6 +13,7 @@ import {
   Circle,
   Type,
   LucideIcon,
+  Edit2,
 } from 'lucide-react';
 
 const iconMap: Record<string, LucideIcon> = {
@@ -115,7 +116,7 @@ function CanvasNodeComponent({
   const [dragInfo, setDragInfo] = useState<{ startX: number; startY: number; initialNodeX: number; initialNodeY: number } | null>(null);
   const [resizeInfo, setResizeInfo] = useState<{ startX: number; startY: number; initialWidth: number; initialHeight: number } | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editText, setEditText] = useState(node.data.customText || node.data.label);
+  const [editText, setEditText] = useState(node.data.customName || node.data.label);
   const updateNode = useCanvasStore((state) => state.updateNode);
 
   const color = node.data.color || COMPONENT_COLORS[node.type];
@@ -187,13 +188,11 @@ function CanvasNodeComponent({
   }, [resizeInfo, node.id, updateNode, zoom]);
 
   const handleDoubleClick = () => {
-    if (node.type === 'text' || isContainer) {
-      setIsEditing(true);
-    }
+    setIsEditing(true);
   };
 
   const handleTextSubmit = () => {
-    updateNode(node.id, { data: { ...node.data, customText: editText } });
+    updateNode(node.id, { data: { ...node.data, customName: editText } });
     setIsEditing(false);
   };
 
@@ -201,31 +200,51 @@ function CanvasNodeComponent({
     if (e.key === 'Enter') handleTextSubmit();
     else if (e.key === 'Escape') {
       setIsEditing(false);
-      setEditText(node.data.customText || node.data.label);
+      setEditText(node.data.customName || node.data.label);
     }
   };
 
   const Icon = iconMap[node.type] || Square;
 
+  const [isHovered, setIsHovered] = useState(false);
+  const isTransparent = node.data.isTransparent !== false;
+
+  let backgroundColor = 'rgba(20, 20, 20, 0.95)';
+  let backdropFilter = 'none';
+  
+  if (isContainer) {
+    backgroundColor = 'transparent';
+    backdropFilter = isTransparent ? 'blur(8px)' : 'none';
+  } else if (isTransparent) {
+    backgroundColor = 'rgba(15, 25, 45, 0.5)';
+    backdropFilter = 'blur(8px)';
+  }
+
+  const shapeFill = node.data.fillColor || 'transparent';
+
   return (
     <div
       ref={nodeRef}
-      className={`canvas-node absolute ${isCircle ? 'circle-node' : ''} ${isSelected && !isContainer ? 'selected' : ''} ${!isContainer && !isText ? 'k8s-component' : ''}`}
+      className={`canvas-node absolute ${isCircle ? 'circle-node' : ''} ${isSelected && !isContainer ? 'selected' : ''} ${!isContainer && !isText ? 'k8s-component' : ''} group`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         left: node.position.x,
         top: node.position.y,
         width: node.width || size.width,
         height: node.height || size.height,
-        backgroundColor: isContainer ? 'transparent' : 'rgba(20, 20, 20, 0.95)',
+        backgroundColor,
+        backdropFilter,
+        WebkitBackdropFilter: backdropFilter,
         border: 'none',
         borderLeft: !isContainer && !isText ? `3px solid ${color}` : undefined,
         borderTop: !isContainer && !isText ? '1px solid rgba(255, 255, 255, 0.05)' : undefined,
         borderRight: !isContainer && !isText ? '1px solid rgba(255, 255, 255, 0.05)' : undefined,
         borderBottom: !isContainer && !isText ? '1px solid rgba(255, 255, 255, 0.05)' : undefined,
-        borderRadius: isCircle ? '50%' : isText ? '8px' : isContainer ? '0px' : '8px',
+        borderRadius: isCircle ? '50%' : '8px',
         boxShadow: isSelected && !isContainer
-          ? '0 0 24px rgba(255, 215, 0, 0.8), 0 0 48px rgba(255, 215, 0, 0.3)'
-          : isContainer ? 'none' : `0 10px 25px rgba(0, 0, 0, 0.5)`,
+          ? `0 0 24px ${color}80, 0 0 48px ${color}40`
+          : isContainer ? 'none' : isTransparent ? `0 0 15px ${color}4d` : `0 10px 25px rgba(0, 0, 0, 0.5)`,
         cursor: dragInfo ? 'grabbing' : 'move',
         display: 'flex',
         flexDirection: isContainer ? 'column' : 'row',
@@ -234,7 +253,7 @@ function CanvasNodeComponent({
         gap: isText || isContainer ? 0 : 12,
         padding: isText ? '8px 16px' : isContainer ? '12px' : '12px',
         transition: dragInfo || resizeInfo ? 'none' : 'all 0.2s ease',
-        zIndex: isContainer ? 0 : (dragInfo ? 1000 : 1),
+        zIndex: isContainer ? 0 : (dragInfo ? 1000 : 10),
         position: 'absolute',
       }}
       id={`node-${node.id}`}
@@ -253,28 +272,28 @@ function CanvasNodeComponent({
         >
           {isCircle ? (
             <>
-              <circle cx="50%" cy="50%" r="50%" fill="rgba(10, 20, 40, 0.7)" />
               <circle
                 cx="50%"
                 cy="50%"
                 r="50%"
-                fill="transparent"
+                fill={shapeFill}
                 stroke={isSelected ? '#ffaa00' : color}
                 strokeWidth={isSelected ? 4 : 3}
                 className={`shape-border ${isSelected ? 'selected' : ''}`}
+                style={{ pointerEvents: 'stroke' }}
               />
             </>
           ) : (
             <>
-              <rect width="100%" height="100%" rx="8" fill="rgba(10, 20, 40, 0.7)" />
               <rect
                 width="100%"
                 height="100%"
                 rx="8"
-                fill="transparent"
+                fill={shapeFill}
                 stroke={isSelected ? '#ffaa00' : color}
                 strokeWidth={isSelected ? 4 : 3}
                 className={`shape-border ${isSelected ? 'selected' : ''}`}
+                style={{ pointerEvents: 'stroke' }}
               />
             </>
           )}
@@ -283,14 +302,18 @@ function CanvasNodeComponent({
 
       {!isText && !isContainer && (
         <div
-          className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-          style={{ backgroundColor: `${color}20`, color }}
+          className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 p-1 bg-white/5"
+          style={{ color }}
         >
-          <Icon size={20} />
+          {node.data.iconUrl ? (
+            <img src={node.data.iconUrl} alt={node.data.label} className="w-full h-full object-contain" />
+          ) : (
+            <Icon size={20} />
+          )}
         </div>
       )}
       
-      <div 
+    <div 
         className={`flex-1 min-w-0 ${isContainer ? 'w-full' : ''}`}
         style={{ pointerEvents: isContainer ? 'none' : 'inherit', zIndex: 10, position: 'relative' }}
       >
@@ -312,15 +335,27 @@ function CanvasNodeComponent({
           />
         ) : (
           <div
-            className={`font-semibold text-sm truncate ${isContainer ? 'opacity-70' : ''}`}
+            className={`font-semibold text-sm truncate flex items-center justify-${isContainer ? 'start' : isText ? 'center' : 'start'} gap-2 ${isContainer ? 'opacity-70' : ''}`}
             style={{
               color,
               textShadow: `0 0 8px ${color}50`,
               fontSize: isText ? '14px' : '13px',
-              textAlign: isText ? 'center' : 'left'
+              cursor: 'text',
+              pointerEvents: 'auto'
             }}
+            onDoubleClick={handleDoubleClick}
           >
-            {node.data.customText || node.data.label}
+            <span>{node.data.customName || node.data.label}</span>
+            {isHovered && !isContainer && (
+              <Edit2 
+                size={12} 
+                className="opacity-50 hover:opacity-100 cursor-pointer transition-opacity shrink-0" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditing(true);
+                }}
+              />
+            )}
           </div>
         )}
       </div>
@@ -424,6 +459,14 @@ function ConnectionLineComponent({
       
       <path
         d={calculateConnectionPath(sourcePos, targetPos, sourceHandle, targetHandle)}
+        stroke="transparent"
+        strokeWidth="20"
+        fill="none"
+        style={{ pointerEvents: 'stroke', cursor: 'pointer' }}
+      />
+      
+      <path
+        d={calculateConnectionPath(sourcePos, targetPos, sourceHandle, targetHandle)}
         stroke="#00ffff"
         strokeWidth="2"
         strokeLinecap="round"
@@ -432,12 +475,13 @@ function ConnectionLineComponent({
         style={{
           strokeDasharray: '8 8',
           animation: 'flowDash 0.5s linear infinite',
+          pointerEvents: 'none'
         }}
       />
       
       {isHovered && (
         <g
-          style={{ cursor: 'pointer' }}
+          style={{ cursor: 'pointer', pointerEvents: 'all' }}
           onClick={(e) => {
             e.stopPropagation();
             deleteConnection(connectionId);
@@ -654,7 +698,7 @@ export default function Canvas({ onContextMenu }: CanvasProps) {
         <div ref={setNodeRef} className="absolute inset-0">
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none"
-            style={{ overflow: 'visible' }}
+            style={{ overflow: 'visible', zIndex: 5 }}
           >
             <defs>
               <filter id="glow">

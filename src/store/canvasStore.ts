@@ -12,7 +12,7 @@ interface CanvasStore {
   gridSize: number;
   connectingFrom: { nodeId: string; handle: string } | null;
 
-  addNode: (type: ComponentType, position: Position) => string;
+  addNode: (type: ComponentType, position: Position, initialData?: Partial<CanvasNode['data']>) => string;
   updateNode: (id: string, updates: Partial<CanvasNode>) => void;
   deleteNode: (id: string) => void;
   selectNode: (id: string | null) => void;
@@ -51,7 +51,7 @@ export const useCanvasStore = create<CanvasStore>()(
       gridSize: 20,
       connectingFrom: null,
 
-      addNode: (type, position) => {
+      addNode: (type, position, initialData) => {
         const gridSize = get().gridSize;
         const id = generateId();
         const snappedPos = {
@@ -65,8 +65,11 @@ export const useCanvasStore = create<CanvasStore>()(
           width: type === 'circle' ? 120 : type === 'text' ? 200 : type === 'rectangle' ? 140 : 160,
           height: type === 'circle' ? 120 : type === 'text' ? 40 : 80,
           data: {
-            label: type.charAt(0).toUpperCase() + type.slice(1).replace('objectstorage', 'Object Storage'),
-            color: undefined,
+            label: initialData?.label || (type.charAt(0).toUpperCase() + type.slice(1).replace('objectstorage', 'Object Storage')),
+            originalName: initialData?.label || type,
+            color: initialData?.color || undefined,
+            iconUrl: initialData?.iconUrl || undefined,
+            isTransparent: true,
           },
         };
         set({ nodes: [...get().nodes, newNode] });
